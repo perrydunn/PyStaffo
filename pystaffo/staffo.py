@@ -3,8 +3,7 @@ import json
 from datetime import datetime
 import pytz
 
-PER_PAGE = 300
-headers = {'Content-Type': 'application/json', }
+per_page = 300
 
 
 def get_timezone(auth, url):
@@ -15,7 +14,7 @@ def get_timezone(auth, url):
     :return:
     """
     url += 'account.json'
-    r = requests.get(url=url, headers=headers, auth=auth, params={'page': 1, 'per_page': PER_PAGE})
+    r = requests.get(url=url, auth=auth, params={'page': 1, 'per_page': per_page})
     data = json.loads(r.content)
     return pytz.timezone(data['time_zone'])
 
@@ -27,15 +26,18 @@ class StaffoAccount:
         self.headers = {'Content-Type': 'application/json', }
         self.timezone = get_timezone(self.auth, self.base_url)
 
-    def get(self, url):
-        r = requests.get(url=url, headers=headers, auth=self.auth, params={'page': 1, 'per_page': PER_PAGE})
+    def get(self, url, extras=None):
+        params = {'page': 1, 'per_page': per_page}
+        if extras:
+            params.update(extras)
+        r = requests.get(url=url, auth=self.auth, params=params)
         data = json.loads(r.content)
         try:
             pages = int(r.headers['Pages'])
             if pages > 1:
                 for page in range(2, pages + 1):
-                    r = requests.get(url=url, headers=headers, auth=self.auth,
-                                     params={'page': page, 'per_page': PER_PAGE})
+                    params.update({'page': page})
+                    r = requests.get(url=url, auth=self.auth, params=params)
                     data += json.loads(r.content)
         except KeyError:
             pass
@@ -98,11 +100,11 @@ class StaffoAccount:
         :param state:
         :return:
         """
+        extension = 'users.json'
         if not state:
-            extension = 'users.json'
+            return self.get(self.base_url + extension)
         else:
-            extension = 'users.json?state=' + state
-        return self.get(self.base_url + extension)
+            return self.get(self.base_url + extension, extras={'state': state})
 
     def loc_users(self, loc_name, dep_name=None):
         """
@@ -114,10 +116,11 @@ class StaffoAccount:
         """
         location_id = self.locations()[loc_name]
         extension = 'locations/{id}/users.json'.format(id=location_id)
-        if dep_name:
+        if not dep_name:
+            return self.get(self.base_url + extension)
+        else:
             department_id = self.departments(loc_name)[dep_name]
-            extension += '?department_ids[]={dep_id}'.format(dep_id=department_id)
-        return self.get(self.base_url + extension)
+            return self.get(self.base_url + extension, extras={'department_ids[]': department_id})
 
     def loc_schedules(self, loc_name, schedule_id=None, start_date=None, end_date=None):
         """
@@ -134,7 +137,9 @@ class StaffoAccount:
         extension = 'locations/{loc_id}/schedules'.format(loc_id=location_id)
         if schedule_id:
             extension += '/{id}.json'.format(id=schedule_id)
+            return self.get(self.base_url + extension)
         elif start_date:
+            extension += '.json'
             # Also checks that input date is in format required.
             start_tz = self.timezone.localize(datetime.strptime(start_date, '%Y-%m-%d'))
             start_tz = datetime.strftime(start_tz, '%z')
@@ -146,11 +151,9 @@ class StaffoAccount:
             end_date = end_tz.strftime('%Y-%m-%d')
             end_tz = end_tz.strftime('%z')
             end_tz = end_tz[:3] + ':' + end_tz[3:]
-            extension += '.json?from={st_date}T00:00:00{st_tz}&until={en_date}T23:59:59{en_tz}'.\
-                format(st_date=start_date, st_tz=start_tz, en_date=end_date, en_tz=end_tz)
-        else:
-            extension += '.json'
-        return self.get(self.base_url + extension)
+            params = {'from': '{st_date}T00:00:00{st_tz}'.format(st_date=start_date, st_tz=start_tz),
+                      'until': '{en_date}T23:59:59{en_tz}'.format(en_date=end_date, en_tz=end_tz)}
+            return self.get(self.base_url + extension, extras=params)
 
     def shifts(self, loc_name=None, dep_name=None, schedule_id=None, start_date=None, end_date=None):
         """
@@ -163,21 +166,16 @@ class StaffoAccount:
         :param end_date:
         :return:
         """
-        extension = ''
         if schedule_id:
-            extension += 'schedules/{sch_id}/'.format(sch_id=schedule_id)
-        elif loc_name:
-            location_id = self.locations()[loc_name]
-            extension += 'locations/{loc_id}/'.format(loc_id=location_id)
-        extension += 'shifts.json'
+            extension = 'schedules/{sch_id}/shifts.json'.format(sch_id=schedule_id)
+            return self.get(self.base_url + extension)
+        params = {}
+        location_id = self.locations()[loc_name]
+        extension = 'locations/{loc_id}/shifts.json'.format(loc_id=location_id)
         if dep_name:
             department_id = self.departments(loc_name)[dep_name]
-            extension += '?department_ids[]={dep_id}'.format(dep_id=department_id)
-            if start_date:
-                extension += '&'
+            params.update({'department_ids[]': department_id})
         if start_date:
-            if not dep_name:
-                extension += '?'
             # Also checks that input date is in format required.
             start_tz = self.timezone.localize(datetime.strptime(start_date, '%Y-%m-%d'))
             start_tz = datetime.strftime(start_tz, '%z')
@@ -189,14 +187,14 @@ class StaffoAccount:
             end_date = end_tz.strftime('%Y-%m-%d')
             end_tz = end_tz.strftime('%z')
             end_tz = end_tz[:3] + ':' + end_tz[3:]
-            extension += 'from={st_date}T00:00:00{st_tz}&until={en_date}T23:59:59{en_tz}'.\
-                format(st_date=start_date, st_tz=start_tz, en_date=end_date, en_tz=end_tz)
-        return self.get(self.base_url + extension)
+            params.update({'from': '{st_date}T00:00:00{st_tz}'.format(st_date=start_date, st_tz=start_tz),
+                           'until': '{en_date}T23:59:59{en_tz}'.format(en_date=end_date, en_tz=end_tz)})
+        return self.get(self.base_url + extension, extras=params)
 
     def put(self, url, data):
-        r = requests.put(url=url, headers=headers, data=json.dumps(data), auth=self.auth)
+        r = requests.put(url=url, data=json.dumps(data), auth=self.auth)
         return r.status_code
 
     def post(self, url, data):
-        r = requests.post(url=url, headers=headers, data=json.dumps(data), auth=self.auth)
+        r = requests.post(url=url, data=json.dumps(data), auth=self.auth)
         return r.status_code
