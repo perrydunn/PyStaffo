@@ -71,7 +71,6 @@ class StaffoAccount:
             return get(auth=self.auth, url=self.base_url + extension)
         elif start_date:
             extension += '.json'
-            # Also checks that input date is in format required.
             start_tz = self.timezone.localize(datetime.strptime(start_date, '%Y-%m-%d'))
             start_tz = datetime.strftime(start_tz, '%z')
             start_tz = start_tz[:3] + ':' + start_tz[3:]
@@ -102,7 +101,6 @@ class StaffoAccount:
             department_id = self.departments[loc_name][dep_name]
             params.update({'department_ids[]': department_id})
         if start_date:
-            # Also checks that input date is in format required.
             start_tz = self.timezone.localize(datetime.strptime(start_date, '%Y-%m-%d'))
             start_tz = datetime.strftime(start_tz, '%z')
             start_tz = start_tz[:3] + ':' + start_tz[3:]
