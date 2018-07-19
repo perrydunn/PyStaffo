@@ -1,3 +1,8 @@
+"""
+A StaffoAccount instance is created for a given account, and its methods make calls to the Staffomatic API.
+Caching is used to avoid repeat calls for the location name-id mappings and department name-id mappings.
+"""
+
 from datetime import datetime
 from .requestors import get, put, post
 from .cached import get_timezone, get_locations, get_departments
@@ -7,7 +12,6 @@ class StaffoAccount:
     def __init__(self, subdomain, user, password):
         self.auth = (user, password)
         self.base_url = 'https://api.staffomaticapp.com/v3/{subdomain}/'.format(subdomain=subdomain)
-        self.headers = {'Content-Type': 'application/json', }
         self.timezone = get_timezone(self.auth, self.base_url)
         self.locations = get_locations(self.auth, self.base_url)
         self.departments = get_departments(self.auth, self.base_url)
@@ -15,31 +19,24 @@ class StaffoAccount:
     def get_location(self, loc_name):
         """
         Gets the information for a specified location, specified by its name.
-        :param loc_name:
-        :return:
         """
         location_id = self.locations[loc_name]
-        specific = get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
-        return specific
+        location = get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
+        return location
 
     def get_department(self, loc_name, dep_name):
         """
         Gets the information for a specified department, specified by its location and department names.
-        :param loc_name:
-        :param dep_name:
-        :return:
         """
         location_id = self.locations[loc_name]
         department_id = self.departments[loc_name][dep_name]
-        specific = get(auth=self.auth, url=self.base_url + 'locations/{loc_id}/departments/{dep_id}.json'.
-                                  format(loc_id=location_id, dep_id=department_id))
-        return specific
+        department = get(auth=self.auth, url=self.base_url + 'locations/{loc_id}/departments/{dep_id}.json'.
+                         format(loc_id=location_id, dep_id=department_id))
+        return department
 
     def get_all_users(self, state=None):
         """
-        Gets the information of all users. The caller can specify if
-        :param state:
-        :return:
+        Gets the information of all users. The caller filter by state of the users.
         """
         extension = 'users.json'
         if not state:
@@ -51,9 +48,6 @@ class StaffoAccount:
         """
         Gets the information of the users in a location specified by name. If dep_name is provided then the users are
         further filtered by the department name provided.
-        :param loc_name:
-        :param dep_name:
-        :return:
         """
         location_id = self.locations[loc_name]
         extension = 'locations/{id}/users.json'.format(id=location_id)
@@ -61,19 +55,14 @@ class StaffoAccount:
             return get(auth=self.auth, url=self.base_url + extension)
         else:
             department_id = self.departments[loc_name][dep_name]
-            return get(auth=self.auth, url=self.base_url + extension,
-                                  extras={'department_ids[]': department_id})
+            return get(auth=self.auth, url=self.base_url + extension, extras={'department_ids[]': department_id})
 
     def get_loc_schedules(self, loc_name, schedule_id=None, start_date=None, end_date=None):
         """
         Gets the schedules for a given location. If the schedule id is specified then only that schedule is returned;
         if the start and end dates are specified then all schedules within those dates are returned: if no end date
         is provided then all schedules since the start date until now are returned.
-        :param loc_name:
-        :param schedule_id:
-        :param start_date:
-        :param end_date:
-        :return:
+        Input dates expected to be date strings in yyyy-mm-dd format.
         """
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/schedules'.format(loc_id=location_id)
@@ -101,12 +90,7 @@ class StaffoAccount:
         """
         Gets the shifts for either a specified schedule (id number) or for a specified location where they may also be
         filtered for a date range or department.
-        :param loc_name:
-        :param dep_name:
-        :param schedule_id:
-        :param start_date:
-        :param end_date:
-        :return:
+        Input dates expected to be date strings in yyyy-mm-dd format.
         """
         if schedule_id:
             extension = 'schedules/{sch_id}/shifts.json'.format(sch_id=schedule_id)
@@ -134,8 +118,11 @@ class StaffoAccount:
         return get(auth=self.auth, url=self.base_url + extension, extras=params)
 
     def add_users(self, loc_name=None, dep_name=None, users=[], remove=False):
+        """
+        Add/Remove a list of user ids to/from a department in a location.
+        """
         location_id = self.locations[loc_name]
-        department_id = self.departments(loc_name)[dep_name]
+        department_id = self.departments[loc_name][dep_name]
         if remove:
             extension = 'locations/{loc_id}/departments/{dep_id}/remove_users.json'.format(loc_id=location_id,
                                                                                            dep_id=department_id)
@@ -146,6 +133,10 @@ class StaffoAccount:
         return put(auth=self.auth, url=self.base_url + extension, data=params)
 
     def update_location(self, loc_name=None, **kwargs):
+        """
+        Update a location's details. Refer to Staffomatic's own API documentation for the parameters that can be
+        altered.
+        """
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}.json'.format(loc_id=location_id)
         params = {}
@@ -154,6 +145,10 @@ class StaffoAccount:
         return put(auth=self.auth, url=self.base_url + extension, data=params)
 
     def update_department(self, loc_name=None, dep_name=None, **kwargs):
+        """
+        Update a department's details. Refer to Staffomatic's own API documentation for the parameters that can be
+        altered.
+        """
         location_id = self.locations[loc_name]
         department_id = self.departments[loc_name][dep_name]
         extension = 'locations/{loc_id}/departments/{dep_id}.json'.format(loc_id=location_id, dep_id=department_id)
@@ -163,6 +158,10 @@ class StaffoAccount:
         return put(auth=self.auth, url=self.base_url + extension, data=params)
 
     def update_schedule(self, loc_name=None, schedule_id=None, **kwargs):
+        """
+        Update a schedule's details. Refer to Staffomatic's own API documentation for the parameters that can be
+        altered. Excludes publishing the schedule which is covered below.
+        """
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/schedules/{sch_id}.json'.format(loc_id=location_id, sch_id=schedule_id)
         params = {}
@@ -171,12 +170,19 @@ class StaffoAccount:
         return put(auth=self.auth, url=self.base_url + extension, data=params)
 
     def publish_schedule(self, loc_name=None, schedule_id=None):
+        """
+        Publish a schedule by the location name and schedule id.
+        """
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/schedules/{sch_id}.json'.format(loc_id=location_id, sch_id=schedule_id)
         params = {'do': 'publish', 'message': 'A new schedule is available!', 'deliver_emails': True}
         return put(auth=self.auth, url=self.base_url + extension, data=params)
 
     def update_user(self, loc_name=None, user_id=None, **kwargs):
+        """
+        Update a user's details. Refer to Staffomatic's own API documentation for the parameters that can be
+        altered. Excludes locking/unlocking the user's account which is covered below.
+        """
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/users/{usr_id}.json'.format(loc_id=location_id, usr_id=user_id)
         params = {}
@@ -185,6 +191,9 @@ class StaffoAccount:
         return put(auth=self.auth, url=self.base_url + extension, data=params)
 
     def lock_user(self, loc_name=None, user_id=None, unlock=False):
+        """
+        Lock/Unlock a user's account. Must provide the location name and the user id.
+        """
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/users/{usr_id}.json'.format(loc_id=location_id, usr_id=user_id)
         if not unlock:
@@ -194,6 +203,10 @@ class StaffoAccount:
         return put(auth=self.auth, url=self.base_url + extension, data=params)
 
     def update_shift(self, schedule_id=None, shift_id=None, **kwargs):
+        """
+        Update a shift's details. Refer to Staffomatic's own API documentation for the parameters that can be
+        altered.
+        """
         extension = 'schedules/{sch_id}/shifts/{shf_id}.json'.format(sch_id=schedule_id, shf_id=shift_id)
         params = {}
         for key in kwargs:
@@ -202,6 +215,9 @@ class StaffoAccount:
 
     def create_location(self, loc_name=None, allow_self_assign=True, applications_visible=False,
                         assignments_visible=True, first_day_of_week=0, swap_shifts=True, users_sort_by='alphabetical'):
+        """
+        Create a new location.
+        """
         params = {'name': loc_name, 'allow_self_assign': allow_self_assign,
                   'applications_visible': applications_visible, 'assignments_visible': assignments_visible,
                   'first_day_of_week': first_day_of_week, 'swap_shifts': swap_shifts, 'users_sort_by': users_sort_by}
@@ -209,10 +225,9 @@ class StaffoAccount:
 
     def create_department(self, loc_name=None, dep_name=None, visibility='staff', color='4286f4', user_selectable=True,
                           include_weekends=True, position=1):
-        if not loc_name:
-            raise Exception('No location provided.')
-        if not dep_name:
-            raise Exception('You need to name the department, ya fool.')
+        """
+        Create a new department within a named location.
+        """
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/departments.json'.format(loc_id=location_id)
         params = {'visibility': visibility, 'name': dep_name, 'color': color, 'user_selectable': user_selectable,
@@ -223,9 +238,10 @@ class StaffoAccount:
                         min_time=0, max_time=24, default_event_minutes=240, show_event_header=False,
                         applications_visible=False, assignments_visible=True, swap_shifts=True, notes_visible=False,
                         allow_self_assign=True):
+        """
+        Create a new schedule within a named location.
+        """
         location_id = self.locations[loc_name]
-        datetime.strptime(bop, '%Y-%m-%d')
-        datetime.strptime(deadline, '%Y-%m-%d')
         params = {'bop': bop, 'eop': eop, 'deadline': deadline, 'first_day_of_week': first_day_of_week,
                   'slot_minutes': slot_minutes, 'min_time': min_time, 'max_time': max_time,
                   'default_event_minutes': default_event_minutes, 'show_event_header': show_event_header,
@@ -235,12 +251,18 @@ class StaffoAccount:
         return post(auth=self.auth, url=self.base_url + extension, data=params)
 
     def invite_user(self, loc_name=None, email=None, department_ids=[]):
+        """
+        Invite a new user to join a Staffomatic location, joining given departments given as a list of department ids.
+        """
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/users.json'.format(loc_id=location_id)
         params = {'email': email, 'department_ids': department_ids, 'do': 'send_invitation'}
         return post(auth=self.auth, url=self.base_url + extension, data=params)
 
     def create_user(self, loc_name=None, first_name=None, last_name=None, department_ids=[]):
+        """
+        Create a new user within a Staffomatic location, joining given departments given as a list of department ids.
+        """
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/users.json'.format(loc_id=location_id)
         params = {'first_name': first_name, 'last_name': last_name, 'department_ids': department_ids}
@@ -248,6 +270,10 @@ class StaffoAccount:
 
     def create_shift(self, loc_name=None, dep_name=None, schedule_id=None, starts_at=None, ends_at=None,
                      desired_coverage=1, note=''):
+        """
+        Create a new shift within a Staffomatic location and for a particular department.
+        The input datetimes are expected to be in the format yyyy-mm-dd HH:MM:SS as strings.
+        """
         start_tz = self.timezone.localize(datetime.strptime(starts_at, '%Y-%m-%d %H:%M:%S'))
         start_tz = datetime.strftime(start_tz, '%z')
         start_tz = start_tz[:3] + ':' + start_tz[3:]

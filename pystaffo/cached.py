@@ -1,3 +1,6 @@
+"""
+Cached does what it says on the tin.
+"""
 import pytz
 from .requestors import get
 
@@ -5,9 +8,6 @@ from .requestors import get
 def get_timezone(auth, base_url):
     """
     Gets the account information which includes the timezone, and returns this timezone as a pytz.timezone object.
-    :param auth:
-    :param base_url:
-    :return:
     """
     data = get(auth=auth, url=base_url + 'account.json')
     return pytz.timezone(data['time_zone'])
@@ -15,11 +15,8 @@ def get_timezone(auth, base_url):
 
 def get_locations(auth, base_url):
     """
-    Gets the locations from Staffomatic and returns a dictionary with the location names as the keys and the
+    Gets the locations on a Staffomatic account and returns a dictionary with the location names as the keys and the
     location id numbers as the values.
-    :param auth:
-    :param base_url:
-    :return:
     """
     details = get(auth=auth, url=base_url + 'locations.json')
     keys, values = [], []
@@ -31,8 +28,8 @@ def get_locations(auth, base_url):
 
 def get_departments(auth, base_url):
     """
-    Gets the departments from Staffomatic for a location specified by name and returns a dictionary with the
-    department names as the keys and the department id numbers as the values.
+    Gets the departments on a Staffomatic account and returns a dictionary of dictionaries withh the location names
+    as the keys and the department names as the keys within, with the department ids as the values.
     """
     locations = get_locations(auth, base_url)
     departments = {}
