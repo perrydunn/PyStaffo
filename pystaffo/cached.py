@@ -1,5 +1,5 @@
 import pytz
-import requestors
+from .requestors import get
 
 
 def get_timezone(auth, base_url):
@@ -9,7 +9,7 @@ def get_timezone(auth, base_url):
     :param base_url:
     :return:
     """
-    data = requestors.get(auth=auth, url=base_url + 'account.json')
+    data = get(auth=auth, url=base_url + 'account.json')
     return pytz.timezone(data['time_zone'])
 
 
@@ -21,7 +21,7 @@ def get_locations(auth, base_url):
     :param base_url:
     :return:
     """
-    details = requestors.get(auth=auth, url=base_url + 'locations.json')
+    details = get(auth=auth, url=base_url + 'locations.json')
     keys, values = [], []
     for i in range(len(details)):
         keys += [details[i]['name']]
@@ -37,7 +37,7 @@ def get_departments(auth, base_url):
     locations = get_locations(auth, base_url)
     departments = {}
     for key, value in locations.items():
-        details = requestors.get(auth, base_url + 'locations/{loc_id}/departments.json'.format(loc_id=value))
+        details = get(auth, base_url + 'locations/{loc_id}/departments.json'.format(loc_id=value))
         keys, values = [], []
         for i in range(len(details)):
             keys += [details[i]['name']]
