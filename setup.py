@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='PyStaffo',
-    version='0.0.1-dev',
+    version='v0.0-dev.1',
     author='Peregrine Dunn',
     author_email='perrydunn@hotmail.co.uk',
     description='A Staffomatic API Python wrapper',
