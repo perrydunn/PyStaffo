@@ -9,8 +9,8 @@ from .cached import get_timezone, get_locations, get_departments
 
 
 class StaffoAccount:
-    def __init__(self, subdomain, user, password):
-        self.auth = (user, password)
+    def __init__(self, subdomain=None, username=None, password=None):
+        self.auth = (username, password)
         self.base_url = 'https://api.staffomaticapp.com/v3/{subdomain}/'.format(subdomain=subdomain)
         self.timezone = get_timezone(self.auth, self.base_url)
         self.locations = get_locations(self.auth, self.base_url)
