@@ -57,6 +57,33 @@ class StaffoAccount:
             department_id = self.departments[loc_name][dep_name]
             return get(auth=self.auth, url=self.base_url + extension, extras={'department_ids[]': department_id})
 
+    def get_schedules(self, schedule_id=None, start_date=None, end_date=None):
+        """
+        Gets the schedules (for all locations). If the schedule id is specified then only that schedule is returned;
+        if the start and end dates are specified then all schedules within those dates are returned: if no end date
+        is provided then all schedules since the start date until now are returned.
+        Input dates expected to be date strings in yyyy-mm-dd format.
+        """
+        extension = 'schedules'
+        if schedule_id:
+            extension += '/{id}.json'.format(id=schedule_id)
+            return get(auth=self.auth, url=self.base_url + extension)
+        elif start_date:
+            extension += '.json'
+            start_tz = self.timezone.localize(datetime.strptime(start_date, '%Y-%m-%d'))
+            start_tz = datetime.strftime(start_tz, '%z')
+            start_tz = start_tz[:3] + ':' + start_tz[3:]
+            if not end_date:
+                end_tz = datetime.now(tz=self.timezone)
+            else:
+                end_tz = self.timezone.localize(datetime.strptime(end_date, '%Y-%m-%d'))
+            end_date = end_tz.strftime('%Y-%m-%d')
+            end_tz = end_tz.strftime('%z')
+            end_tz = end_tz[:3] + ':' + end_tz[3:]
+            params = {'from': '{st_date}T00:00:00{st_tz}'.format(st_date=start_date, st_tz=start_tz),
+                      'until': '{en_date}T23:59:59{en_tz}'.format(en_date=end_date, en_tz=end_tz)}
+            return get(auth=self.auth, url=self.base_url + extension, extras=params)
+
     def get_loc_schedules(self, loc_name, schedule_id=None, start_date=None, end_date=None):
         """
         Gets the schedules for a given location. If the schedule id is specified then only that schedule is returned;
