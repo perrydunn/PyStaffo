@@ -9,7 +9,7 @@ $ pip install git+https://github.com/perrydunn/PyStaffo
 ```
 
 ## Requirements
-* Python 3 (untested on Python 2)
+* Python 3 except 3.2 (untested on Python 2)
 * You need a Staffomatic account! A Staffomatic account includes a sub-domain name, and login details as a username and password.
 
 ## Basic Use
