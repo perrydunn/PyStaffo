@@ -149,18 +149,21 @@ class StaffoAccount:
                            'until': '{en_date}T23:59:59{en_tz}'.format(en_date=end_date, en_tz=end_tz)})
         return get(auth=self.auth, url=self.base_url + extension, extras=params)
 
-    def add_users(self, loc_name=None, dep_name=None, users=[], remove=False):
+    def add_users(self, department_id=None, loc_name=None, dep_name=None, users=[], remove=False):
         """
-        Add/Remove a list of user ids to/from a department in a location.
+        Add/Remove a list of user ids to/from a department identified either by its ID or by its location and
+        department names.
         """
-        location_id = self.locations[loc_name]
-        department_id = self.departments[loc_name][dep_name]
-        if remove:
-            extension = 'locations/{loc_id}/departments/{dep_id}/remove_users.json'.format(loc_id=location_id,
-                                                                                           dep_id=department_id)
+        if department_id:
+            extension = 'departments/{dep_id}/'.format(dep_id=department_id)
         else:
-            extension = 'locations/{loc_id}/departments/{dep_id}/add_users.json'.format(loc_id=location_id,
-                                                                                        dep_id=department_id)
+            location_id = self.locations[loc_name]
+            department_id = self.departments[loc_name][dep_name]
+            extension = 'locations/{loc_id}/departments/{dep_id}/'.format(loc_id=location_id, dep_id=department_id)
+        if remove:
+            extension += 'remove_users.json'
+        else:
+            extension += 'add_users.json'
         params = {'user_ids': users}
         return put(auth=self.auth, url=self.base_url + extension, data=params)
 
