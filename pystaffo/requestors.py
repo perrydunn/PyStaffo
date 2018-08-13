@@ -20,13 +20,3 @@ def get(auth=None, url=None, extras=None):
     except KeyError:
         pass
     return data
-
-
-def put(auth=None, url=None, data=None):
-    r = requests.put(auth=auth, url=url, data=data)
-    return r.status_code
-
-
-def post(auth=None, url=None, data=None):
-    r = requests.post(auth=auth, url=url, data=data)
-    return r.status_code

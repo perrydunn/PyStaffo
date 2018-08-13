@@ -3,8 +3,9 @@ A StaffoAccount instance is created for a given account, and its methods make ca
 Caching is used to avoid repeat calls for the location name-id mappings and department name-id mappings.
 """
 
+import requests
 from datetime import datetime
-from .requestors import get, put, post
+from .requestors import get
 from .cached import get_timezone, get_locations, get_departments
 
 
@@ -165,7 +166,7 @@ class StaffoAccount:
         else:
             extension += 'add_users.json'
         params = {'user_ids': users}
-        return put(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def update_location(self, loc_name=None, **kwargs):
         """
@@ -177,7 +178,7 @@ class StaffoAccount:
         params = {}
         for key in kwargs:
             params.update({key: kwargs[key]})
-        return put(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def update_department(self, loc_name=None, dep_name=None, **kwargs):
         """
@@ -190,7 +191,7 @@ class StaffoAccount:
         params = {}
         for key in kwargs:
             params.update({key: kwargs[key]})
-        return put(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def update_schedule(self, loc_name=None, schedule_id=None, **kwargs):
         """
@@ -202,7 +203,7 @@ class StaffoAccount:
         params = {}
         for key in kwargs:
             params.update({key: kwargs[key]})
-        return put(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def publish_schedule(self, loc_name=None, schedule_id=None):
         """
@@ -211,7 +212,7 @@ class StaffoAccount:
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/schedules/{sch_id}.json'.format(loc_id=location_id, sch_id=schedule_id)
         params = {'do': 'publish', 'message': 'A new schedule is available!', 'deliver_emails': True}
-        return put(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def update_user(self, loc_name=None, user_id=None, **kwargs):
         """
@@ -223,7 +224,7 @@ class StaffoAccount:
         params = {}
         for key in kwargs:
             params.update({key: kwargs[key]})
-        return put(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def lock_user(self, loc_name=None, user_id=None, unlock=False):
         """
@@ -235,7 +236,7 @@ class StaffoAccount:
             params = {'do': 'lock'}
         else:
             params = {'do': 'unlock'}
-        return put(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def update_shift(self, schedule_id=None, shift_id=None, **kwargs):
         """
@@ -246,7 +247,7 @@ class StaffoAccount:
         params = {}
         for key in kwargs:
             params.update({key: kwargs[key]})
-        return put(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def create_location(self, loc_name=None, allow_self_assign=True, applications_visible=False,
                         assignments_visible=True, first_day_of_week=0, swap_shifts=True, users_sort_by='alphabetical'):
@@ -256,7 +257,7 @@ class StaffoAccount:
         params = {'name': loc_name, 'allow_self_assign': allow_self_assign,
                   'applications_visible': applications_visible, 'assignments_visible': assignments_visible,
                   'first_day_of_week': first_day_of_week, 'swap_shifts': swap_shifts, 'users_sort_by': users_sort_by}
-        return post(auth=self.auth, url=self.base_url + 'locations.json', data=params)
+        return requests.post(auth=self.auth, url=self.base_url + 'locations.json', json=params)
 
     def create_department(self, loc_name=None, dep_name=None, visibility='staff', color='4286f4', user_selectable=True,
                           include_weekends=True, position=1):
@@ -267,7 +268,7 @@ class StaffoAccount:
         extension = 'locations/{loc_id}/departments.json'.format(loc_id=location_id)
         params = {'visibility': visibility, 'name': dep_name, 'color': color, 'user_selectable': user_selectable,
                   'include_weekends': include_weekends, 'position': position}
-        return post(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
 
     def create_schedule(self, loc_name=None, bop=None, eop=None, deadline=None, first_day_of_week=1, slot_minutes=30,
                         min_time=0, max_time=24, default_event_minutes=240, show_event_header=False,
@@ -283,7 +284,7 @@ class StaffoAccount:
                   'applications_visible': applications_visible, 'assignments_visible': assignments_visible,
                   'swap_shifts': swap_shifts, 'notes_visible': notes_visible, 'allow_self_assign': allow_self_assign}
         extension = 'locations/{loc_id}/schedules.json'.format(loc_id=location_id)
-        return post(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
 
     def invite_user(self, loc_name=None, email=None, department_ids=[]):
         """
@@ -292,7 +293,7 @@ class StaffoAccount:
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/users.json'.format(loc_id=location_id)
         params = {'email': email, 'department_ids': department_ids, 'do': 'send_invitation'}
-        return post(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
 
     def create_user(self, loc_name=None, first_name=None, last_name=None, department_ids=[]):
         """
@@ -301,7 +302,7 @@ class StaffoAccount:
         location_id = self.locations[loc_name]
         extension = 'locations/{loc_id}/users.json'.format(loc_id=location_id)
         params = {'first_name': first_name, 'last_name': last_name, 'department_ids': department_ids}
-        return post(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
 
     def create_shift(self, loc_name=None, dep_name=None, schedule_id=None, starts_at=None, ends_at=None,
                      desired_coverage=1, note=''):
@@ -322,4 +323,4 @@ class StaffoAccount:
         extension = 'schedules/{sch_id}/shifts.json'.format(sch_id=schedule_id)
         params = {'starts_at': starts_at, 'ends_at': ends_at, 'location_id': location_id,
                   'department_id': department_id, 'desired_coverage': desired_coverage, 'note': note}
-        return post(auth=self.auth, url=self.base_url + extension, data=params)
+        return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
