@@ -16,29 +16,22 @@ class StaffoAccount:
         self.locations = get_locations(self.auth, self.base_url)
         self.departments = get_departments(self.auth, self.base_url)
 
-    def get_location(self, location_id=None, loc_name=None):
+    def get_location(self, loc_name):
         """
-        Gets the information for a specified location, specified by its id or name.
+        Gets the information for a specified location, specified by its name.
         """
-        if location_id:
-            location = get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
-        else:
-            location_id = self.locations[loc_name]
-            location = get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
+        location_id = self.locations[loc_name]
+        location = get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
         return location
 
-    def get_department(self, department_id=None, loc_name=None, dep_name=None):
+    def get_department(self, loc_name, dep_name):
         """
-        Gets the information for a specified department, specified by its id or by its location and department names.
+        Gets the information for a specified department, specified by its location and department names.
         """
-        if department_id:
-            department = get(auth=self.auth, url=self.base_url + 'departments/{dep_id}.json'.
-                             format(dep_id=department_id))
-        else:
-            location_id = self.locations[loc_name]
-            department_id = self.departments[loc_name][dep_name]
-            department = get(auth=self.auth, url=self.base_url + 'locations/{loc_id}/departments/{dep_id}.json'.
-                            format(loc_id=location_id, dep_id=department_id))
+        location_id = self.locations[loc_name]
+        department_id = self.departments[loc_name][dep_name]
+        department = get(auth=self.auth, url=self.base_url + 'locations/{loc_id}/departments/{dep_id}.json'.
+                         format(loc_id=location_id, dep_id=department_id))
         return department
 
     def get_all_users(self, state=None):
@@ -268,7 +261,7 @@ class StaffoAccount:
 
     def create_schedule(self, loc_name=None, bop=None, eop=None, deadline=None, first_day_of_week=1, slot_minutes=30,
                         min_time=0, max_time=24, default_event_minutes=240, show_event_header=False,
-                        applications_visible=True, assignments_visible=True, swap_shifts=True, notes_visible=False,
+                        applications_visible=False, assignments_visible=True, swap_shifts=True, notes_visible=False,
                         allow_self_assign=True):
         """
         Create a new schedule within a named location.
