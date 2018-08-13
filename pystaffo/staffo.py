@@ -38,7 +38,7 @@ class StaffoAccount:
             location_id = self.locations[loc_name]
             department_id = self.departments[loc_name][dep_name]
             department = get(auth=self.auth, url=self.base_url + 'locations/{loc_id}/departments/{dep_id}.json'.
-                            format(loc_id=location_id, dep_id=department_id))
+                             format(loc_id=location_id, dep_id=department_id))
         return department
 
     def get_all_users(self, state=None):
