@@ -14,5 +14,5 @@ setup(
     license='MIT',
     url='http://github.com/perrydunn/PyStaffo',
     packages=find_packages(),
-    install_requires=['pytz', 'requests'],
+    install_requires=['pytz', 'requests>=2.4.2'],
 )
