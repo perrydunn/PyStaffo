@@ -305,7 +305,7 @@ class StaffoAccount:
         return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
 
     def create_shift(self, loc_name=None, dep_name=None, schedule_id=None, starts_at=None, ends_at=None,
-                     desired_coverage=1, note=''):
+                     desired_coverage=1, note='', **kwargs):
         """
         Create a new shift within a Staffomatic location and for a particular department.
         The input datetimes are expected to be in the format yyyy-mm-dd HH:MM:SS as strings.
@@ -323,4 +323,6 @@ class StaffoAccount:
         extension = 'schedules/{sch_id}/shifts.json'.format(sch_id=schedule_id)
         params = {'starts_at': starts_at, 'ends_at': ends_at, 'location_id': location_id,
                   'department_id': department_id, 'desired_coverage': desired_coverage, 'note': note}
+        for key in kwargs:
+            params.update({key: kwargs[key]})
         return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
