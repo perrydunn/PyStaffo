@@ -273,7 +273,7 @@ class StaffoAccount:
     def create_schedule(self, loc_name=None, bop=None, eop=None, deadline=None, first_day_of_week=1, slot_minutes=30,
                         min_time=0, max_time=24, default_event_minutes=240, show_event_header=False,
                         applications_visible=True, assignments_visible=True, swap_shifts=True, notes_visible=False,
-                        allow_self_assign=True):
+                        allow_self_assign=True, allow_overlapping_assignments=False, allow_self_remove=False):
         """
         Create a new schedule within a named location.
         """
@@ -282,7 +282,9 @@ class StaffoAccount:
                   'slot_minutes': slot_minutes, 'min_time': min_time, 'max_time': max_time,
                   'default_event_minutes': default_event_minutes, 'show_event_header': show_event_header,
                   'applications_visible': applications_visible, 'assignments_visible': assignments_visible,
-                  'swap_shifts': swap_shifts, 'notes_visible': notes_visible, 'allow_self_assign': allow_self_assign}
+                  'swap_shifts': swap_shifts, 'notes_visible': notes_visible, 'allow_self_assign': allow_self_assign,
+                  'allow_overlapping_assignments': allow_overlapping_assignments,
+                  'allow_self_remove': allow_self_remove}
         extension = 'locations/{loc_id}/schedules.json'.format(loc_id=location_id)
         return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
 
