@@ -328,3 +328,14 @@ class StaffoAccount:
         for key in kwargs:
             params.update({key: kwargs[key]})
         return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
+
+    def assign_user_to_shift(self, shift_id=None, user_id=None):
+        """
+        Assigns user_id to shift_id. No bulk method available yet.
+        :param shift_id:
+        :param user_id:
+        :return:
+        """
+        extension = 'shifts/{shft_id}/assign.json'.format(shft_id=shift_id)
+        params = {'user_id': user_id}
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
