@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='PyStaffo',
-    version='v0.0-dev.2',
+    version='v0.0-dev.3',
     author='Peregrine Dunn',
     author_email='perrydunn@hotmail.co.uk',
     description='A Staffomatic API Python wrapper',
@@ -13,7 +13,6 @@ setup(
     long_description_content_type='text/markdown',
     license='MIT',
     url='http://github.com/perrydunn/PyStaffo',
-    keywords='postcodes_io',
     classifiers=[
         'Development Status :: 1 - Planning',
         'License :: OSI Approved :: MIT License',
