@@ -2,7 +2,13 @@
 *PyStaffo* is a Python wrapper library for the Staffomatic/Easypep API that simplifies many common tasks.
 
 ## Installation
-For now install as follows:
+Either from PyPi:
+
+```
+$ pip install PyStaffo
+```
+
+Or from GitHub:
 
 ```
 $ pip install git+https://github.com/perrydunn/PyStaffo
