@@ -13,6 +13,14 @@ setup(
     long_description_content_type='text/markdown',
     license='MIT',
     url='http://github.com/perrydunn/PyStaffo',
+    keywords='postcodes_io',
+    classifiers=[
+        'Development Status :: 1 - Planning',
+        'License :: OSI Approved :: MIT License',
+        'Natural Language :: English',
+        'Programming Language :: Python :: >=3.3',
+        'Topic :: Office/Business :: Scheduling'
+    ],
     packages=find_packages(),
     install_requires=['pytz', 'requests>=2.4.2'],
 )
