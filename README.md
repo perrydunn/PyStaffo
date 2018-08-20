@@ -44,6 +44,9 @@ Please refer to the ```staffo.py``` for the methods currently available, and fee
 ### Timezone Handling
 PyStaffo handles timezones for you, using the timezone detailed in your account. If there are timezone issues you may need to look "under the hood". Please suggest improvements/alternatives.
 
+### Contributing
+If you would like to see features added or tweaked, please fork, make your changes and open a PR. Feel free to get in touch too.
+
 ### Aknowledgements
 - [**Staffomatic API Documentation**](https://github.com/staffomatic/staffomatic-api-documentation)
 
