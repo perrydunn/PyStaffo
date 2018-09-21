@@ -131,9 +131,12 @@ class StaffoAccount:
             extension = 'schedules/{sch_id}/shifts.json'.format(sch_id=schedule_id)
             return get(auth=self.auth, url=self.base_url + extension)
         params = {}
-        if not location_id:
-            location_id = self.locations[loc_name]
-        extension = 'locations/{loc_id}/shifts.json'.format(loc_id=location_id)
+        if location_id or loc_name:
+            if not location_id:
+                location_id = self.locations[loc_name]
+            extension = 'locations/{loc_id}/shifts.json'.format(loc_id=location_id)
+        else:
+            extension = 'shifts.json'
         if department_id or dep_name:
             if not department_id:
                 department_id = self.departments[loc_name][dep_name]
