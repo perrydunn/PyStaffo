@@ -5,6 +5,9 @@ per_page = 300
 
 
 def get(auth=None, url=None, extras=None):
+    """
+    Paginated GET
+    """
     params = {'page': 1, 'per_page': per_page}
     if extras:
         params.update(extras)
