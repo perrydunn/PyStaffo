@@ -4,6 +4,7 @@ Caching is used to avoid repeat calls for the location name-id mappings and depa
 """
 
 import requests
+import json
 from datetime import datetime
 from .requestors import get
 from .cached import get_timezone, get_locations, get_departments
@@ -182,7 +183,13 @@ class StaffoAccount:
         params = {}
         for key in kwargs:
             params.update({key: kwargs[key]})
-        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
+        response = requests.put(auth=self.auth, url=self.base_url + extension, json=params)
+        if response.status_code is 200 and 'name' in kwargs.keys():
+            data = json.loads(response.content.decode('utf-8'))
+            locations = {self.locations[key]: key for key in self.locations.keys()}
+            locations.update({data['id']: data['name']})
+            self.locations = {locations[key]: key for key in locations}
+        return response
 
     def update_department(self, department_id=None, loc_name=None, dep_name=None, **kwargs):
         """
@@ -191,11 +198,22 @@ class StaffoAccount:
         """
         if not department_id:
             department_id = self.departments[loc_name][dep_name]
-        extension = 'departments/{dep_id}.json'.format(loc_id=location_id, dep_id=department_id)
+        extension = 'departments/{dep_id}.json'.format(dep_id=department_id)
         params = {}
         for key in kwargs:
             params.update({key: kwargs[key]})
-        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
+        response = requests.put(auth=self.auth, url=self.base_url + extension, json=params)
+        if response.status_code is 200 and 'name' in kwargs.keys():
+            data = json.loads(response.content.decode('utf-8'))
+            for key in self.departments:
+                location_departments = self.departments[key]
+                location_departments = {location_departments[k]: k for k in location_departments}
+                if data['id'] in location_departments:
+                    location_departments.update({data['id']: data['name']})
+                    location_departments = {location_departments[k]: k for k in location_departments}
+                    self.departments[key] = location_departments
+                    break
+        return response
 
     def update_schedule(self, schedule_id=None, **kwargs):
         """
@@ -261,7 +279,11 @@ class StaffoAccount:
                   'allow_self_remove': allow_self_remove}
         for key in kwargs:
             params.update({key: kwargs[key]})
-        return requests.post(auth=self.auth, url=self.base_url + 'locations.json', json=params)
+        response = requests.post(auth=self.auth, url=self.base_url + 'locations.json', json=params)
+        if response.status_code is 200:
+            data = json.loads(response.content.decode('utf-8'))
+            self.locations.update({data['name']: data['id']})
+        return response
 
     def create_department(self, location_id=None, loc_name=None, dep_name=None, visibility='staff', color='4286f4',
                           user_selectable=True, include_weekends=True, position=1, **kwargs):
@@ -275,7 +297,14 @@ class StaffoAccount:
                   'include_weekends': include_weekends, 'position': position}
         for key in kwargs:
             params.update({key: kwargs[key]})
-        return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
+        response = requests.post(auth=self.auth, url=self.base_url + extension, json=params)
+        if response.status_code is 200:
+            data = json.loads(response.content.decode('utf-8'))
+            if not loc_name:
+                locations = {self.locations[key]: key for key in self.locations}
+                loc_name = locations[location_id]
+            self.departments[loc_name].update({data['name']: data['id']})
+        return response
 
     def create_schedule(self, location_id=None, loc_name=None, bop=None, eop=None, deadline=None, first_day_of_week=1,
                         slot_minutes=30, min_time=0, max_time=24, default_event_minutes=240, show_event_header=False,
