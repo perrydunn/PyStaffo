@@ -20,13 +20,13 @@ $ pip install git+https://github.com/perrydunn/PyStaffo
 
 ## Basic Use
 ```
-from pystaffo import staffo
+from pystaffo import StaffoAccount
 
 subdomain = '<subdomain>'
 username = '<username>'
 password = '<password>'
 
-account = staffo.StaffoAccount(subdomain=subdomain, username=username, password=password)
+account = StaffoAccount(subdomain=subdomain, username=username, password=password)
 
 # The locations and departments are cached as attributes of the class instance.
 # Return dictionary of {'department_name': department_id, ...}:
