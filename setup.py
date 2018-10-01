@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='PyStaffo',
-    version='v0.0-dev.3',
+    version='v0.0.0',
     author='Peregrine Dunn',
     author_email='perrydunn@hotmail.co.uk',
     description='A Staffomatic API Python wrapper',
@@ -14,7 +14,7 @@ setup(
     license='MIT',
     url='http://github.com/perrydunn/PyStaffo',
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
