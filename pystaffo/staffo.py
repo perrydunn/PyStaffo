@@ -157,7 +157,7 @@ class StaffoAccount:
                            'until': '{en_date}T23:59:59{en_tz}'.format(en_date=end_date, en_tz=end_tz)})
         return get(auth=self.auth, url=self.base_url + extension, extras=params)
 
-    def add_users(self, department_id=None, loc_name=None, dep_name=None, users=[], remove=False):
+    def add_users(self, department_id=None, loc_name=None, dep_name=None, users=None, remove=False):
         """
         Add/Remove a list of user ids to/from a department identified either by its ID or by its location and
         department names.
@@ -187,6 +187,8 @@ class StaffoAccount:
         if response.status_code is 200 and 'name' in kwargs.keys():
             data = json.loads(response.content.decode('utf-8'))
             locations = {self.locations[key]: key for key in self.locations.keys()}
+            old_name = locations[data['id']]
+            self.departments[data['name']] = self.departments.pop(old_name)
             locations.update({data['id']: data['name']})
             self.locations = {locations[key]: key for key in locations}
         return response
@@ -226,12 +228,12 @@ class StaffoAccount:
             params.update({key: kwargs[key]})
         return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
-    def publish_schedule(self, schedule_id=None):
+    def publish_schedule(self, schedule_id=None, deliver_emails=True):
         """
         Publish a schedule by the location name and schedule id.
         """
         extension = 'schedules/{sch_id}.json'.format(sch_id=schedule_id)
-        params = {'do': 'publish', 'message': 'A new schedule is available!', 'deliver_emails': True}
+        params = {'do': 'publish', 'message': 'A new schedule is available!', 'deliver_emails': deliver_emails}
         return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def update_user(self, user_id=None, **kwargs):
@@ -262,7 +264,7 @@ class StaffoAccount:
         altered.
         """
         extension = 'shifts/{shf_id}.json'.format(shf_id=shift_id)
-        params = {}
+        params = dict()
         for key in kwargs:
             params.update({key: kwargs[key]})
         return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
@@ -283,12 +285,13 @@ class StaffoAccount:
         if response.status_code is 200:
             data = json.loads(response.content.decode('utf-8'))
             self.locations.update({data['name']: data['id']})
+            self.departments.update({data['name']: dict()})
         return response
 
     def create_department(self, location_id=None, loc_name=None, dep_name=None, visibility='staff', color='4286f4',
                           user_selectable=True, include_weekends=True, position=1, **kwargs):
         """
-        Create a new department within a named location.
+        Create a new department within a location identified either by id or by name.
         """
         if not location_id:
             location_id = self.locations[loc_name]
