@@ -23,29 +23,24 @@ class StaffoAccount:
         Gets the information for a specified location, specified by its id or name.
         """
         if location_id:
-            location = get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
+            return get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
         else:
             location_id = self.locations[loc_name]
-            location = get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
-        return location
+            return get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
 
     def get_department(self, department_id=None, loc_name=None, dep_name=None):
         """
         Gets the information for a specified department, specified by its id or by its location and department names.
         """
         if department_id:
-            department = get(auth=self.auth, url=self.base_url + 'departments/{dep_id}.json'.
-                             format(dep_id=department_id))
+            return get(auth=self.auth, url=self.base_url + 'departments/{dep_id}.json'.format(dep_id=department_id))
         else:
-            location_id = self.locations[loc_name]
             department_id = self.departments[loc_name][dep_name]
-            department = get(auth=self.auth, url=self.base_url + 'locations/{loc_id}/departments/{dep_id}.json'.
-                             format(loc_id=location_id, dep_id=department_id))
-        return department
+            return get(auth=self.auth, url=self.base_url + 'departments/{dep_id}.json'.format(dep_id=department_id))
 
     def get_all_users(self, state=None):
         """
-        Gets the information of all users. The caller filter by state of the users.
+        Gets the information of all users, filterable by state of the users.
         """
         extension = 'users.json'
         if not state:
@@ -65,7 +60,7 @@ class StaffoAccount:
             return get(auth=self.auth, url=self.base_url + extension)
         else:
             department_id = self.departments[loc_name][dep_name]
-            return get(auth=self.auth, url=self.base_url + extension, extras={'department_ids[]': department_id})
+            return get(auth=self.auth, url=self.base_url + extension, extras={'department_ids': department_id})
 
     def get_schedules(self, schedule_id=None, start_date=None, end_date=None):
         """
@@ -264,7 +259,7 @@ class StaffoAccount:
         altered.
         """
         extension = 'shifts/{shf_id}.json'.format(shf_id=shift_id)
-        params = dict()
+        params = {}
         for key in kwargs:
             params.update({key: kwargs[key]})
         return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
@@ -285,7 +280,7 @@ class StaffoAccount:
         if response.status_code is 200:
             data = json.loads(response.content.decode('utf-8'))
             self.locations.update({data['name']: data['id']})
-            self.departments.update({data['name']: dict()})
+            self.departments.update({data['name']: {}})
         return response
 
     def create_department(self, location_id=None, loc_name=None, dep_name=None, visibility='staff', color='4286f4',
@@ -330,17 +325,22 @@ class StaffoAccount:
         extension = 'locations/{loc_id}/schedules.json'.format(loc_id=location_id)
         return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
 
-    def invite_user(self, location_id=None, loc_name=None, email=None, department_ids=[]):
+    def invite_user(self, location_id=None, loc_name=None, email=None, department_ids=None, dep_names=None, **kwargs):
         """
-        Invite a new user to join a Staffomatic location, joining given departments given as a list of department ids.
+        Invite a new user to join a Staffomatic location, joining given departments given as a list of department ids,
+        or a list of department names within a named location.
         """
         if not location_id:
             location_id = self.locations[loc_name]
+            if not department_ids:
+                department_ids = [self.departments[loc_name][dep_name] for dep_name in dep_names]
         extension = 'locations/{loc_id}/users.json'.format(loc_id=location_id)
         params = {'email': email, 'department_ids': department_ids, 'do': 'send_invitation'}
+        for key in kwargs:
+            params.update({key: kwargs[key]})
         return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
 
-    def create_user(self, location_id=None, loc_name=None, first_name=None, last_name=None, department_ids=[]):
+    def create_user(self, location_id=None, loc_name=None, first_name=None, last_name=None, department_ids=None):
         """
         Create a new user within a Staffomatic location, joining given departments given as a list of department ids.
         """
@@ -351,10 +351,11 @@ class StaffoAccount:
         return requests.post(auth=self.auth, url=self.base_url + extension, json=params)
 
     def create_shift(self, location_id=None, loc_name=None, department_id=None, dep_name=None, schedule_id=None,
-                     starts_at=None, ends_at=None, desired_coverage=1, note='', **kwargs):
+                     starts_at=None, ends_at=None, desired_coverage=1, note=None, **kwargs):
         """
         Create a new shift within a Staffomatic location and for a particular department.
         The input datetimes are expected to be in the format yyyy-mm-dd HH:MM:SS as strings.
+        The schedule id must be specified.
         In the next version this will be simplified.
         """
         start_tz = self.timezone.localize(datetime.strptime(starts_at, '%Y-%m-%d %H:%M:%S'))
@@ -382,3 +383,26 @@ class StaffoAccount:
         extension = 'shifts/{shft_id}/assign.json'.format(shft_id=shift_id)
         params = {'user_id': user_id}
         return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
+
+    def get_events(self, start_date=None, end_date=None):
+        """
+        Collects the events...
+        """
+        extension = 'events.json'
+        if start_date:
+            start_tz = self.timezone.localize(datetime.strptime(start_date, '%Y-%m-%d'))
+            start_tz = datetime.strftime(start_tz, '%z')
+            start_tz = start_tz[:3] + ':' + start_tz[3:]
+            if not end_date:
+                end_tz = datetime.now(tz=self.timezone)
+            else:
+                end_tz = self.timezone.localize(datetime.strptime(end_date, '%Y-%m-%d'))
+            end_date = end_tz.strftime('%Y-%m-%d')
+            end_tz = end_tz.strftime('%z')
+            end_tz = end_tz[:3] + ':' + end_tz[3:]
+            params = {
+                'from': '{st_date}T00:00:00{st_tz}'.format(st_date=start_date, st_tz=start_tz),
+                'until': '{en_date}T23:59:59{en_tz}'.format(en_date=end_date, en_tz=end_tz)
+            }
+            return get(auth=self.auth, url=self.base_url + extension, extras=params)
+        return get(auth=self.auth, url=self.base_url + extension)
