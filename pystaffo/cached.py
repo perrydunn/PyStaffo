@@ -1,6 +1,8 @@
 """
 Cached does what it says on the tin.
 """
+import requests
+import json
 import pytz
 from .requestors import get
 
@@ -9,7 +11,10 @@ def get_timezone(auth, base_url):
     """
     Gets the account information which includes the timezone, and returns this timezone as a pytz.timezone object.
     """
-    data = get(auth=auth, url=base_url + 'account.json')
+    r = requests.get(url=base_url + 'account.json', auth=auth)
+    if r.status_code is not 200:
+        raise requests.exceptions.HTTPError('Invalid Authentication')
+    data = json.loads(r.content.decode('utf-8'))
     return pytz.timezone(data['time_zone'])
 
 
