@@ -6,8 +6,8 @@ Caching is used to avoid repeat calls for the location name-id mappings and depa
 import requests
 import json
 from datetime import datetime
-from .requestors import get
-from .cached import get_timezone, get_locations, get_departments
+from .paginated import get
+from .cached import get_timezone, get_location_mapping, get_department_mapping
 
 
 class StaffoAccount:
@@ -15,8 +15,14 @@ class StaffoAccount:
         self.auth = (username, password)
         self.base_url = 'https://api.staffomaticapp.com/v3/{subdomain}/'.format(subdomain=subdomain)
         self.timezone = get_timezone(self.auth, self.base_url)
-        self.locations = get_locations(self.auth, self.base_url)
-        self.departments = get_departments(self.auth, self.base_url)
+        self.locations = get_location_mapping(self.auth, self.base_url)
+        self.departments = get_department_mapping(self.auth, self.base_url)
+
+    def get_locations(self):
+        """
+        Gets the information of all the locations in an account.
+        """
+        return get(auth=self.auth, url=self.base_url + 'locations.json')
 
     def get_location(self, location_id=None, loc_name=None):
         """
@@ -27,6 +33,12 @@ class StaffoAccount:
         else:
             location_id = self.locations[loc_name]
             return get(auth=self.auth, url=self.base_url + 'locations/{id}.json'.format(id=location_id))
+
+    def get_departments(self):
+        """
+        Gets the information of all the departments in an account.
+        """
+        return get(auth=self.auth, url=self.base_url + 'departments.json')
 
     def get_department(self, department_id=None, loc_name=None, dep_name=None):
         """
