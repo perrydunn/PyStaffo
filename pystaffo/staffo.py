@@ -396,11 +396,14 @@ class StaffoAccount:
         params = {'user_id': user_id}
         return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
-    def get_events(self, start_date=None, end_date=None):
+    def get_events(self, start_date=None, end_date=None, delivery_state='all', event_type=None, **kwargs):
         """
         Collects the events...
         """
         extension = 'events.json'
+        params = {'delivery_state': delivery_state}
+        if event_type:
+            params.update({'event_type[]': event_type})
         if start_date:
             start_tz = self.timezone.localize(datetime.strptime(start_date, '%Y-%m-%d'))
             start_tz = datetime.strftime(start_tz, '%z')
@@ -412,9 +415,13 @@ class StaffoAccount:
             end_date = end_tz.strftime('%Y-%m-%d')
             end_tz = end_tz.strftime('%z')
             end_tz = end_tz[:3] + ':' + end_tz[3:]
-            params = {
+            params.update({
                 'from': '{st_date}T00:00:00{st_tz}'.format(st_date=start_date, st_tz=start_tz),
                 'until': '{en_date}T23:59:59{en_tz}'.format(en_date=end_date, en_tz=end_tz)
-            }
+            })
+            for key in kwargs:
+                params.update({key: kwargs[key]})
             return get(auth=self.auth, url=self.base_url + extension, extras=params)
-        return get(auth=self.auth, url=self.base_url + extension)
+        for key in kwargs:
+            params.update({key: kwargs[key]})
+        return get(auth=self.auth, url=self.base_url + extension, extras=params)
