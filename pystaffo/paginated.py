@@ -3,23 +3,29 @@ import json
 
 per_page = 300
 
-
 def get(auth=None, url=None, extras=None):
     """
     Paginated GET
     """
-    params = {'page': 1, 'per_page': per_page}
+    data = []
+    keep_going = True
+    page = 1 # start with page = 1. thats the first page
+    params = {'page': page, 'per_page': 100}
     if extras:
         params.update(extras)
-    r = requests.get(url=url, auth=auth, params=params)
-    data = json.loads(r.content.decode('utf-8'))
-    try:
-        pages = int(r.headers['Pages'])
-        if pages > 1:
-            for page in range(2, pages + 1):
-                params.update({'page': page})
-                r = requests.get(url=url, auth=auth, params=params)
-                data += json.loads(r.content.decode('utf-8'))
-    except KeyError:
-        pass
+    while keep_going: # keep iterating over pages until `keep_going == false`
+        params.update({'page': page}) # first request with page=1
+        # API request
+        r = requests.get(url=url, auth=auth, params=params, )
+        response = json.loads(r.content.decode('utf-8'))
+        # if the API returns an empty array. we know we dont have any data left
+        # so we can safely abort
+        if len(response) == 0:
+            keep_going = False
+        if (not 'Page' in r.headers):
+            data += response
+            keep_going = False
+        else:
+            data += response
+            page += 1
     return data
