@@ -254,17 +254,16 @@ class StaffoAccount:
             params.update({key: kwargs[key]})
         return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
-    def lock_user(self, loc_name, user_id=None, unlock=False):
+    def lock_user(self, user_id=None, unlock=False):
         """
-        Lock/Unlock a user's account. Must provide the location name and the user id.
+        Lock/Unlock a user's account.
         """
-        location_id = self.locations[loc_name]
-        extension = 'locations/{loc_id}/users/{usr_id}.json'.format(loc_id=location_id, usr_id=user_id)
+        extension = 'users/{usr_id}.json'.format(usr_id=user_id)
         if not unlock:
             params = {'do': 'lock'}
         else:
             params = {'do': 'unlock'}
-        return requests.put(auth=self.auth, url=self.base_url + extension, json=params) 
+        return requests.put(auth=self.auth, url=self.base_url + extension, json=params)
 
     def update_shift(self, shift_id=None, **kwargs):
         """
@@ -427,10 +426,10 @@ class StaffoAccount:
             params.update({key: kwargs[key]})
         return get(auth=self.auth, url=self.base_url + extension, extras=params)
 
-    def get_application(self, user_id):
-        """Gets the information of all the departments in an account.
-
-        /applications.json?user_ids%5B%5D=493 507835
+    def get_user_applications(self, user_id):
         """
-        extension = 'applications.json?user_ids%5B%5D={user_id}'.format(user_id = user_id['id'].iloc[0])
-        return get(auth=self.auth, url=self.base_url + extension)
+        Gets all the applications of a user, identified by Staffomatic user ID.
+        """
+        extension = 'applications.json'
+        params = {'user_ids': user_id}
+        return get(auth=self.auth, url=self.base_url + extension, extras=params)
