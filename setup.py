@@ -8,7 +8,7 @@ with open('requirements.txt') as fh:
 
 setup(
     name='PyStaffo',
-    version='0.1.3',
+    version='0.1.4',
     author='Peregrine Dunn',
     author_email='perrydunn@hotmail.co.uk',
     description='A Staffomatic API Python wrapper',
