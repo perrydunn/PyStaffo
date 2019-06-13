@@ -10,7 +10,6 @@ def get(auth=None, url=None, extras=None):
     page = 1
     params = {'page': page, 'per_page': PER_PAGE}
     if extras: params.update(extras)
-    print(url)
     r = requests.get(url=url, auth=auth, params=params)
     data = json.loads(r.content.decode('utf-8'))
     keep_going = True
