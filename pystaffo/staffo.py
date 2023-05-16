@@ -164,6 +164,37 @@ class StaffoAccount:
                            'until': '{en_date}T23:59:59{en_tz}'.format(en_date=end_date, en_tz=end_tz)})
         return get(auth=self.auth, url=self.base_url + extension, extras=params)
 
+    def get_absences(account, location_id=None, loc_name=None, start_date=None, end_date=None) -> dict:
+        """ 
+        Gets the absence for a specified location where they may also be
+        filtered for a date range or department.
+        For filtering by location and department it is expected that
+        the user is either using names or IDs but not a
+        mixture of the two.
+        Input dates expected to be date strings in yyyy-mm-dd format.
+        """
+        params = {}
+        if location_id or loc_name:
+            if not location_id:
+                location_id = account.locations[loc_name]
+            extension = 'locations/{loc_id}/absences.json'.format(loc_id=location_id)
+        else:
+            extension = 'absences.json'
+        if start_date:
+            start_tz = account.timezone.localize(datetime.strptime(start_date, '%Y-%m-%d'))
+            start_tz = datetime.strftime(start_tz, '%z')
+            start_tz = start_tz[:3] + ':' + start_tz[3:]
+            if not end_date:
+                end_tz = datetime.now(tz=account.timezone)
+            else:
+                end_tz = account.timezone.localize(datetime.strptime(end_date, '%Y-%m-%d'))
+            end_date = end_tz.strftime('%Y-%m-%d')
+            end_tz = end_tz.strftime('%z')
+            end_tz = end_tz[:3] + ':' + end_tz[3:]
+            params.update({'from': '{st_date}T00:00:00{st_tz}'.format(st_date=start_date, st_tz=start_tz),
+                        'until': '{en_date}T23:59:59{en_tz}'.format(en_date=end_date, en_tz=end_tz)})
+        return get(auth=account.auth, url=account.base_url + extension, extras=params)
+
     def add_users(self, department_id=None, loc_name=None, dep_name=None, users=None, remove=False):
         """
         Add/Remove a list of user ids to/from a department identified either by its ID or by its location and
